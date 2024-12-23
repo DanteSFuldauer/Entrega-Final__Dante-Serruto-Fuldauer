@@ -1,4 +1,5 @@
 <h1>Lista de productos</h1>
+
 <div class="row">
     {{#each productos}}
         {{#if status}}
@@ -10,10 +11,20 @@
                     <p class="card-text">Category: {{category}}</p>
                     <p class="card-text">Price: ${{price}}</p>
                     <p class="card-text">Stock: {{stock}}</p>
-                    <button type="button" class="btn btn-primary">Agregar al carrito</button>
+
+                    <!-- Botón no funcional -->
+                    <button type="button" class="btn btn-success">Agregar al carrito</button>
                 </div>
         </div>    
         {{/if}}
     {{/each}}
 </div>
-    
+
+<div id="pagination">
+    {{#if hasPrev}}
+      <a href="?page={{prevPage}}">Anterior</a>
+    {{/if}}
+    {{#if hasNext}}
+      <a href="?page={{nextPage}}">Siguiente</a>
+    {{/if}}
+</div>

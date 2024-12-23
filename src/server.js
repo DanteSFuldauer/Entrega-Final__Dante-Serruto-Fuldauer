@@ -1,76 +1,76 @@
-import express from 'express'
-import mongoose from 'mongoose'
-import { create } from 'express-handlebars'
-import { Server } from 'socket.io'
-import path from 'path'
-import { __dirname } from './path.js'
-import productRouter from './routes/productos.routes.js'
-import cartRouter from './routes/carritos.routes.js'
-import chatRouter from './routes/chat.routes.js'
-import orderRouter from './routes/orders.routes.js'
+import express from 'express';
+import mongoose from 'mongoose';
+import { create } from 'express-handlebars';
+import { Server } from 'socket.io';
+import path from 'path';
+import { __dirname } from './path.js';
+import productRouter from './routes/productos.routes.js';
+import cartRouter from './routes/carritos.routes.js';
+import { allowInsecurePrototypeAccess } from '@handlebars/allow-prototype-access'; 
+import Handlebars from 'handlebars';
 
-//instancia de express
-const app = express()
-const hbs = create()
-const PORT = 8080
+// Instancia de express
+const app = express();
 
-const server = app.listen(PORT, () => {
-    console.log("Server on Port", PORT)
-})
+const hbs = create({ 
+    defaultLayout: 'main', // Especifica el layout predeterminado
+    layoutsDir: path.join(__dirname, 'views', 'layouts'), // Ubicación del layout
+    partialsDir: path.join(__dirname, 'views', 'partials'), // Ubicación de los partials })
+    handlebars: allowInsecurePrototypeAccess(Handlebars)
+});
 
-//conexion con mongo DB
+
+const PORT = 8080;
+
+// Conexión con MongoDB
 await mongoose.connect("mongodb+srv://dante:coderhouse@cluster0.8dvcc.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
 .then(() => console.log("BDD Conectada"))
-.catch((e) => console.log("Error al conectar con BDD: ", e))
+.catch((e) => console.log("Error al conectar con BDD: ", e));
 
-//inicializo socket.io en el servidor
-const io = new Server(server)
+// Inicializo socket.io en el servidor
+const server = app.listen(PORT, () => {
+    console.log("Server on Port", PORT);
+});
 
+const io = new Server(server);
 
-//Middlewares 
-app.use(express.json()) //para manejar JSON en las peticiones
-app.use(express.urlencoded({extended:true})) //para manejar queries complejos
+// Middlewares 
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-//configuracion de hbs para locacion de plantilla y extencion de archivos
-app.engine('handlebars', hbs.engine)
-app.set('view engine', 'handlebars')
+// Configuración de Handlebars para locación de plantilla y extensión de archivos
+app.engine('handlebars', hbs.engine);
+app.set('view engine', 'handlebars');
 
-//establezco el directorio de las vistas
-app.set('views', path.join(__dirname, 'views'))
+// Aquí está el cambio importante: 
+// Establezco el directorio de las vistas para buscar dentro de 'views/templates'
+app.set('views', path.join(__dirname, 'views', 'templates'));
 
-//rutas de mi applicacion
-app.use('/public', express.static(__dirname + '/public'))
-app.use('/api/products', productRouter)
-app.use('/api/carts', cartRouter)
-app.use('/api/chat', chatRouter)
-app.use('/api/orders', orderRouter)
+// Rutas de mi aplicación
+app.use('/public', express.static(__dirname + '/public'));
+app.use('/api/products', productRouter);
+app.use('/api/carts', cartRouter);
 
+// Ruta principal para redirigir a la lista de productos
+app.get('/', (req, res) => {
+    res.redirect('/products');
+});
 
-//res.render('nombre-plantilla', {objetos a enviar})
-app.get('/', (req,res) => {
+// Guardar mensajes en array
+let mensajes = [];
 
-    //envio array objeto
-    res.render('/templates/productos', {productos})
-})
+// Agrego mensajes
+io.on('connection', (socket) => {
+    console.log('Usuario conectado: ', socket.id);
 
-//guardar mensajes en array
-let mensajes = []
+    socket.on('Mensaje', (data) => {
+        console.log('Mensaje recibido: ', data);
+        mensajes.push(data);
 
-//agrego mensajes
-io.on('conection', () => { //cuando se produzca el apreton de manos puedo ejecutar las isguientes funciones
-    console.log('Usuario conectado: ', socket.id) //id de conexion
+        socket.emit('respuesta', mensajes);
+    });
 
-    //con ON se recibe
-    socket.on('Mensaje', (data) => { //cuando el usuario me muestra un mensaje, trabajo con esos datos
-        console.log('Mensaje recibido: ', data)
-        mensajes.push(data)
-
-        //envia el array de mensajes
-        socket.emit('respuesta', mensajes)
-    })
-
-    //detectar desconexion
     socket.on('disconnect', () => {
         console.log('Usuario desconectado: ', socket.id);
-    })
-})
+    });
+});

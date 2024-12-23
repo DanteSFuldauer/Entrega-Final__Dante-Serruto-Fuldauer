@@ -4,11 +4,18 @@ import productModel from "../models/product.model.js";
 //obtener todos los productos
 export const getProducts = async (req,res) => {
     try { //ejecuto el codigo
-        const {limit} = req.query
-        const prods = await productModel.paginate({}, {limit:1, page:1})
-        console.log(prods)
-        
-        red.status(200).render('templates/home', {productos: prods, js: 'productos.js', css: 'productos.css'})
+        const {limit, page, filter, metFilter, ord} = req.query
+
+        const pag = page !== undefined ? page : 1 //si al pagina ingresada consulto por ella sino 1
+        const lim = limit !== undefined ? limit : 10
+        const query = metFilter !== undefined ? {[metFilter]: filter } : {} //madnar status o ctegory como metodo de filter
+        const sortOption = ord ? { price: ord === 'asc' ? 1 : -1 } : {}; //mandar asc o desc
+
+        const prods = await productModel.paginate(query, {limit: lim, page: pag, sort: sortOption})
+        console.log(prods);
+
+        // Enviar los productos 
+        res.render('index', { title: 'Lista de Productos', productos: prods.docs, hasPrev: prods.hasPrevPage, hasNext: prods.hasNextPage, prevPage: prods.prevPage, nextPage: prods.nextPage, css: 'index.css', js: 'index.js'});
 
     } catch(e) { //si suceden errores
         res.status(500).send("Error al consultar productos: ", e)
@@ -21,11 +28,11 @@ export const getProduct = async(req,res) => {
         const idProd = req.params.pid
         const prod = await productModel.findById(idProd)
 
-        if (prod)
-            res.status(200).send(prod)
-        else
+        if (prod) {
+             res.render('product', { title: prod.title, product: prod, css: 'product.css', js: 'product.js' });
+        } else {
         res.status(404).send("Producto no existe")
-
+        }
     } catch (e) {
         res.status(500).send("Error al consultar producto: ", e)
     }

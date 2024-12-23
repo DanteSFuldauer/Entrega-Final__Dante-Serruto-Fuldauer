@@ -9,7 +9,7 @@ const cartSchema = new Schema({
                     required: true,
                     ref: 'products' //significa que este id hace ref a un id de la coleccio n productos
                 },
-                quentity: {
+                quantity: {
                     type: Number,
                     required: true
                 }

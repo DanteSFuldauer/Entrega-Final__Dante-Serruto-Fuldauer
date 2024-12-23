@@ -1,0 +1,26 @@
+
+<body>
+    <h1>Carrito de Compras</h1>
+    <div id="cart-items">
+        {{#each cart.products}}
+          <div class="cart-item card" style="width: 18rem;">
+            <div class="card-body">
+              <h5 class="card-title">{{this.id_prod.title}}</h5>
+              <p class="card-text">{{this.id_prod.description}}</p>
+              <p class="card-text">Precio: ${{this.id_prod.price}}</p>
+              <p class="card-text">Cantidad: {{this.quantity}}</p>
+              <button class="btn btn-danger">Eliminar</button>
+            </div>
+          </div>
+        {{/each}}
+    </div>
+    <div id="pagination">
+        {{#if hasPrev}}
+          <a href="?page={{prevPage}}">Anterior</a>
+        {{/if}}
+        {{#if hasNext}}
+          <a href="?page={{nextPage}}">Siguiente</a>
+        {{/if}}
+    </div>
+</body>
+</html>
